@@ -1,0 +1,13 @@
+[package]
+name = "chiwen"
+version = "0.1.0"
+authors = ["iovxw <iovxw@outlook.com>"]
+
+[dependencies]
+futures = "0.1"
+tokio-core = "0.1"
+gdk = "0.5"
+gtk = { version = "0.1", features = ["v3_10"] }
+relm =  "0.9"
+relm-derive = "0.9"
+relm-attributes = "0.9"
