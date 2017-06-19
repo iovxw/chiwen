@@ -1,15 +1,11 @@
-#![feature(proc_macro)]
-
 extern crate gtk;
 #[macro_use]
 extern crate relm;
-extern crate relm_attributes;
 #[macro_use]
 extern crate relm_derive;
 
-use gtk::{Inhibit, WidgetExt, WindowExt};
-use relm::Widget;
-use relm_attributes::widget;
+use gtk::{Inhibit, WidgetExt, ContainerExt, WindowExt};
+use relm::{Widget, RemoteRelm};
 
 use self::Msg::*;
 
@@ -18,36 +14,53 @@ pub enum Msg {
     Quit,
 }
 
-#[widget]
+#[derive(Clone)]
+struct Win {
+    label: gtk::Label,
+    header_bar: gtk::HeaderBar,
+    window: gtk::Window,
+}
+
 impl Widget for Win {
-    fn init_view(&self, _model: &mut ()) {
-        self.window.set_titlebar(&self.bar);
-        self.label.set_text(&self.window.get_id().to_string());
+    type Model = ();
+    type ModelParam = ();
+    type Msg = Msg;
+    type Root = gtk::Window;
+
+    fn model(_: Self::ModelParam) -> Self::Model {
+        ()
     }
 
-    fn model() -> () {
+    fn root(&self) -> &Self::Root {
+        &self.window
     }
 
-    fn update(&mut self, event: Msg, _model: &mut ()) {
+    fn update(&mut self, event: Self::Msg, _model: &mut Self::Model) {
         match event {
             Quit => gtk::main_quit(),
         }
     }
 
-    view! {
-        #[name="window"]
-        gtk::ApplicationWindow {
-            #[name="label"]
-            gtk::Label {
-                text: "",
-            },
-            #[name="bar"]
-            gtk::HeaderBar {
-                title: "Title",
-                subtitle: "subtitle",
-                show_close_button: true,
-            },
-            delete_event(_, _) => (Quit, Inhibit(false)),
+    fn view(relm: &RemoteRelm<Self>, _model: &Self::Model) -> Self {
+        let window = gtk::Window::new(gtk::WindowType::Toplevel);
+
+        let header_bar = gtk::HeaderBar::new();
+        header_bar.set_show_close_button(true);
+        header_bar.set_title("Title");
+        header_bar.set_subtitle("subtitle");
+        window.set_titlebar(&header_bar);
+
+        let label = gtk::Label::new("label");
+        window.add(&label);
+
+        connect!(relm, window, connect_delete_event(_, _) (Some(Quit), Inhibit(false)));
+
+        window.show_all();
+
+        Win {
+            label,
+            header_bar,
+            window,
         }
     }
 }
