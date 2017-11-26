@@ -4,8 +4,8 @@ extern crate relm;
 #[macro_use]
 extern crate relm_derive;
 
-use gtk::{Inhibit, WidgetExt, ContainerExt, WindowExt};
-use relm::{Widget, RemoteRelm};
+use gtk::{Inhibit, WidgetExt, ContainerExt, WindowExt, HeaderBarExt};
+use relm::{Widget, Relm, Update};
 
 use self::Msg::*;
 
@@ -21,27 +21,30 @@ struct Win {
     window: gtk::Window,
 }
 
-impl Widget for Win {
+impl Update for Win {
     type Model = ();
     type ModelParam = ();
     type Msg = Msg;
-    type Root = gtk::Window;
 
-    fn model(_: Self::ModelParam) -> Self::Model {
+    fn model(_: &Relm<Self>, _: Self::ModelParam) -> Self::Model {
         ()
     }
 
-    fn root(&self) -> &Self::Root {
-        &self.window
-    }
-
-    fn update(&mut self, event: Self::Msg, _model: &mut Self::Model) {
+    fn update(&mut self, event: Self::Msg) {
         match event {
             Quit => gtk::main_quit(),
         }
     }
+}
 
-    fn view(relm: &RemoteRelm<Self>, _model: &Self::Model) -> Self {
+impl Widget for Win {
+    type Root = gtk::Window;
+
+    fn root(&self) -> Self::Root {
+        self.window.clone()
+    }
+
+    fn view(relm: &Relm<Self>, _model: Self::Model) -> Self {
         let window = gtk::Window::new(gtk::WindowType::Toplevel);
 
         let header_bar = gtk::HeaderBar::new();
@@ -53,7 +56,7 @@ impl Widget for Win {
         let label = gtk::Label::new("label");
         window.add(&label);
 
-        connect!(relm, window, connect_delete_event(_, _) (Some(Quit), Inhibit(false)));
+        connect!(relm, window, connect_delete_event(_, _), return (Some(Quit), Inhibit(false)));
 
         window.show_all();
 
