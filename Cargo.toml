@@ -3,6 +3,8 @@ name = "chiwen"
 version = "0.1.0"
 authors = ["iovxw <iovxw@outlook.com>"]
 
+[workspace]
+
 [dependencies]
 futures = "0.1"
 tokio-core = "0.1"
@@ -10,3 +12,4 @@ gdk = "0.6"
 gtk = { version = "0.2", features = ["v3_10"] }
 relm =  "0.10"
 relm-derive = "0.10"
+libpsensor = { version = "0.1", path = "./libpsensor" }

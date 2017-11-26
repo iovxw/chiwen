@@ -1,0 +1,7 @@
+[package]
+name = "libpsensor"
+version = "0.1.0"
+authors = ["iovxw <iovxw@outlook.com>"]
+
+[dependencies]
+libpsensor-sys = { version = "0.1", path = "./libpsensor-sys" }
