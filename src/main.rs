@@ -50,7 +50,7 @@ impl Update for Win {
         match event {
             SensorsUpdate => {
                 for (id, sensor) in self.model.sensors.iter().enumerate() {
-                    self.temperatures[id].set_text(&sensor.value.get().to_string());
+                    self.temperatures[id].set_text(&sensor.value.get().round().to_string());
                 }
             }
             Quit => gtk::main_quit(),
