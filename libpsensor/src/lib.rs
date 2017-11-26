@@ -1,6 +1,8 @@
 extern crate libpsensor_sys as sys;
 
 use std::ffi::CStr;
+use std::ops::Index;
+use std::cell::Cell;
 
 pub struct SensorList {
     pointer: *mut *mut sys::psensor,
@@ -40,7 +42,11 @@ impl SensorList {
         self.inner.len()
     }
 
-    pub fn update(&self) -> Vec<(&Sensor, f64)> {
+    pub fn iter(&self) -> SensorListIter {
+        SensorListIter { inner: self.inner.iter() }
+    }
+
+    pub fn update(&self) {
         unsafe {
             sys::psensor_amd_list_update(self.pointer);
             sys::psensor_nvidia_list_update(self.pointer);
@@ -56,12 +62,23 @@ impl SensorList {
         let len = self.inner.len();
         let sensors: &[*mut sys::psensor] =
             unsafe { std::slice::from_raw_parts_mut(self.pointer, len) };
-        let mut r = Vec::with_capacity(len);
         for (&sensor_pointer, sensor) in sensors.iter().zip(&self.inner) {
             let value = unsafe { sys::psensor_get_current_value(sensor_pointer) };
-            r.push((sensor, value));
+            sensor.value.set(value);
         }
-        r
+    }
+}
+
+impl Index<usize> for SensorList {
+    type Output = Sensor;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.inner[index]
+    }
+}
+
+impl std::fmt::Debug for SensorList {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        self.inner.fmt(f)
     }
 }
 
@@ -73,12 +90,24 @@ impl Drop for SensorList {
     }
 }
 
+pub struct SensorListIter<'a> {
+    inner: std::slice::Iter<'a, Sensor>,
+}
+
+impl<'a> Iterator for SensorListIter<'a> {
+    type Item = &'a Sensor;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
 #[derive(Debug)]
 pub struct Sensor {
     pub name: String,
     pub id: String,
     pub chip: String,
     pub kind: SensorType,
+    pub value: Cell<f64>,
     pub max: f64,
     pub min: f64,
 }
@@ -93,6 +122,7 @@ impl Sensor {
             SensorType::Other { is_temp: true } if chip.contains("GPU") => SensorType::Gpu,
             x => x,
         };
+        let value = Cell::new(0.0);
         let mut max = (*raw).max;
         if max == std::f64::MIN_POSITIVE {
             max = std::f64::NAN
@@ -106,6 +136,7 @@ impl Sensor {
             id,
             chip,
             kind,
+            value,
             max,
             min,
         }
