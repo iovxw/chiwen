@@ -78,7 +78,7 @@ pub struct Sensor {
     pub name: String,
     pub id: String,
     pub chip: String,
-    pub kind: PsensorType,
+    pub kind: SensorType,
     pub max: f64,
     pub min: f64,
 }
@@ -88,9 +88,9 @@ impl Sensor {
         let name = CStr::from_ptr((*raw).name).to_string_lossy().into_owned();
         let id = CStr::from_ptr((*raw).id).to_string_lossy().into_owned();
         let chip = CStr::from_ptr((*raw).chip).to_string_lossy().into_owned();
-        let kind = match PsensorType::from_raw((*raw).type_) {
-            PsensorType::Other { is_temp: true } if chip.contains("CPU") => PsensorType::Cpu,
-            PsensorType::Other { is_temp: true } if chip.contains("GPU") => PsensorType::Gpu,
+        let kind = match SensorType::from_raw((*raw).type_) {
+            SensorType::Other { is_temp: true } if chip.contains("CPU") => SensorType::Cpu,
+            SensorType::Other { is_temp: true } if chip.contains("GPU") => SensorType::Gpu,
             x => x,
         };
         let mut max = (*raw).max;
@@ -139,7 +139,7 @@ impl std::hash::Hash for Sensor {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PsensorType {
+pub enum SensorType {
     Hdd,
     Cpu,
     Gpu,
@@ -147,9 +147,9 @@ pub enum PsensorType {
     Other { is_temp: bool },
 }
 
-impl PsensorType {
-    fn from_raw(raw: std::os::raw::c_uint) -> PsensorType {
-        use PsensorType::*;
+impl SensorType {
+    fn from_raw(raw: std::os::raw::c_uint) -> SensorType {
+        use SensorType::*;
         if raw & sys::psensor_type_SENSOR_TYPE_NVCTRL != 0 {
             if raw & sys::psensor_type_SENSOR_TYPE_TEMP != 0 {
                 return Gpu;
