@@ -40,7 +40,6 @@ impl SensorList {
         self.inner.len()
     }
 
-
     pub fn update(&self) -> Vec<(&Sensor, f64)> {
         unsafe {
             sys::psensor_amd_list_update(self.pointer);
@@ -90,8 +89,8 @@ impl Sensor {
         let id = CStr::from_ptr((*raw).id).to_string_lossy().into_owned();
         let chip = CStr::from_ptr((*raw).chip).to_string_lossy().into_owned();
         let kind = match PsensorType::from_raw((*raw).type_) {
-            PsensorType::Other{is_temp: true} if chip.contains("CPU") => PsensorType::Cpu,
-            PsensorType::Other{is_temp: true} if chip.contains("GPU") => PsensorType::Gpu,
+            PsensorType::Other { is_temp: true } if chip.contains("CPU") => PsensorType::Cpu,
+            PsensorType::Other { is_temp: true } if chip.contains("GPU") => PsensorType::Gpu,
             x => x,
         };
         let mut max = (*raw).max;
